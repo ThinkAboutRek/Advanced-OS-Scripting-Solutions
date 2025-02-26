@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil  # Added for cross-drive file movement
 import hashlib
 import json
 from datetime import datetime
@@ -81,7 +82,7 @@ def submit_assignment():
         print("❌ Name cannot be empty.")
         return
 
-    file_path = input("Enter the file path of your assignment: ").strip()
+    file_path = input("Enter the file path of your assignment: ").strip().replace("\\", "/")  # Fix Windows paths
     if not os.path.exists(file_path):
         print("❌ File does not exist.")
         return
@@ -101,11 +102,16 @@ def submit_assignment():
         print("⚠ This file has already been submitted!")
         return
 
-    # Move file to submissions folder
+    # Move file to submissions folder (Fix: Use shutil.move for cross-drive movement)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     new_filename = f"{student_name}_{timestamp}{ext}"
     new_filepath = os.path.join(SUBMISSION_FOLDER, new_filename)
-    os.rename(file_path, new_filepath)
+
+    try:
+        shutil.move(file_path, new_filepath)  # Fixed for cross-drive moves
+    except Exception as e:
+        print(f"❌ Error moving file: {e}")
+        return
 
     # Extract text for plagiarism check
     new_text = extract_text_from_file(new_filepath)
@@ -133,7 +139,7 @@ def list_submissions():
 
 # Function to check for duplicate submissions
 def check_duplicate():
-    file_path = input("Enter the file path to check for duplicates: ").strip()
+    file_path = input("Enter the file path to check for duplicates: ").strip().replace("\\", "/")
     if not os.path.exists(file_path):
         print("❌ File does not exist.")
         return
