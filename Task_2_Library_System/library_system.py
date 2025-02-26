@@ -18,37 +18,40 @@ AVAILABLE_BOOKS = {
 # Ensure necessary files exist
 for file in [BOOK_REQUESTS_FILE, LIBRARY_LOG_FILE, BORROWED_BOOKS_FILE]:
     if not os.path.exists(file):
-        open(file, "w").close()
+        with open(file, "w", encoding="utf-8") as f:
+            f.write("[]") if "book_requests" in file or "borrowed_books" in file else f.write("")
 
-# Function to log actions
+# Function to log actions (fixes Unicode error)
 def log_action(action):
-    with open(LIBRARY_LOG_FILE, "a") as log_file:
+    with open(LIBRARY_LOG_FILE, "a", encoding="utf-8") as log_file:
         log_file.write(f"{action}\n")
 
-# Function to load book requests
+# Function to load book requests (Fix: Always return valid JSON)
 def load_requests():
     try:
-        with open(BOOK_REQUESTS_FILE, "r") as file:
-            return json.load(file) if file.read().strip() else []
-    except json.JSONDecodeError:
+        with open(BOOK_REQUESTS_FILE, "r", encoding="utf-8") as file:
+            content = file.read().strip()
+            return json.loads(content) if content else []
+    except (json.JSONDecodeError, FileNotFoundError):
         return []
 
 # Function to save book requests
 def save_requests(requests):
-    with open(BOOK_REQUESTS_FILE, "w") as file:
+    with open(BOOK_REQUESTS_FILE, "w", encoding="utf-8") as file:
         json.dump(requests, file, indent=4)
 
 # Function to load borrowed books
 def load_borrowed_books():
     try:
-        with open(BORROWED_BOOKS_FILE, "r") as file:
-            return json.load(file) if file.read().strip() else []
-    except json.JSONDecodeError:
+        with open(BORROWED_BOOKS_FILE, "r", encoding="utf-8") as file:
+            content = file.read().strip()
+            return json.loads(content) if content else []
+    except (json.JSONDecodeError, FileNotFoundError):
         return []
 
 # Function to save borrowed books
 def save_borrowed_books(borrowed_books):
-    with open(BORROWED_BOOKS_FILE, "w") as file:
+    with open(BORROWED_BOOKS_FILE, "w", encoding="utf-8") as file:
         json.dump(borrowed_books, file, indent=4)
 
 # Function to view available books
@@ -57,11 +60,11 @@ def view_books():
     for key, title in AVAILABLE_BOOKS.items():
         print(f"{key}. {title}")
 
-# Function to request a book
+# Function to request a book (Fix: Prevent duplicate requests)
 def request_book():
     view_books()
     book_id = input("\nEnter the book number you want to request: ").strip()
-    
+
     if book_id not in AVAILABLE_BOOKS:
         print("❌ Invalid book selection. Try again.")
         return
@@ -71,14 +74,22 @@ def request_book():
         print("❌ Name cannot be empty.")
         return
 
-    priority = input("Enter priority (1-10, or leave blank for default 5): ").strip()
-    priority = int(priority) if priority.isdigit() and 1 <= int(priority) <= 10 else 5
+    while True:
+        priority = input("Enter priority (1-10, or leave blank for default 5): ").strip()
+        if priority.isdigit() and 1 <= int(priority) <= 10:
+            priority = int(priority)
+            break
+        elif priority == "":
+            priority = 5  # Default priority
+            break
+        else:
+            print("❌ Invalid priority. Enter a number between 1 and 10.")
 
     requests = load_requests()
 
     # Prevent duplicate requests from the same student
     for request in requests:
-        if request["student"] == student_name and request["book"] == AVAILABLE_BOOKS[book_id]:
+        if request["student"].lower() == student_name.lower() and request["book"] == AVAILABLE_BOOKS[book_id]:
             print("⚠ You have already requested this book!")
             return
 
@@ -88,7 +99,7 @@ def request_book():
     log_action(f"📖 Book requested: {AVAILABLE_BOOKS[book_id]} by {student_name} (Priority: {priority})")
     print("✅ Book request added successfully.")
 
-# Function to process book requests (FIFO or Priority)
+# Function to process book requests (Fix: Ensure FIFO and Priority work correctly)
 def process_requests():
     requests = load_requests()
 
@@ -101,7 +112,7 @@ def process_requests():
     print("2️⃣ Priority-based (Highest Priority First)")
 
     choice = input("Enter option: ").strip()
-    
+
     if choice == "2":
         requests.sort(key=lambda x: x["priority"], reverse=True)
 
@@ -122,7 +133,7 @@ def list_borrowed_books():
     if not borrowed_books:
         print("⚠ No books have been borrowed yet.")
         return
-    
+
     print("\n📋 Borrowed Books:")
     for entry in borrowed_books:
         print(f"📖 {entry['book']} - Borrowed by: {entry['student']} (Priority: {entry['priority']})")
@@ -140,12 +151,12 @@ def exit_system():
 # Main menu loop
 while True:
     print("\n🔹 Library Smart Borrowing System 🔹")
-    print("1️⃣ View Available Books")
-    print("2️⃣ Request a Book")
-    print("3️⃣ Process Book Requests")
-    print("4️⃣ List Borrowed Books")
-    print("5️⃣ Exit")
-    
+    print("1️⃣  View Available Books")
+    print("2️⃣  Request a Book")
+    print("3️⃣  Process Book Requests")
+    print("4️⃣  List Borrowed Books")
+    print("5️⃣  Exit")
+
     option = input("Choose an option: ").strip()
 
     if option == "1":
