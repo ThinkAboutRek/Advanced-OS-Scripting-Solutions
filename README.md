@@ -75,6 +75,11 @@ python exam_submission.py
 - All logs and processed data are saved automatically in their respective directories.
 - For any issues, refer to the logs (`backup_log.txt`, `library_log.txt`, `submission_log.txt`).
 
+## 📄 References
+1. Python Software Foundation. (2024). *Python Documentation*. Retrieved from https://docs.python.org/3/
+2. GNU Bash Manual. (2024). *Bash Scripting Guide*. Retrieved from https://www.gnu.org/software/bash/manual/bash.html
+3. The Linux Documentation Project. (2024). *Advanced Bash-Scripting Guide*. Retrieved from http://tldp.org/LDP/abs/html/
+
 ## 📄 Author & Acknowledgments
 **Developed by:** Shayan Bagheri 
 For **Advanced Operating Systems (U14553) - Assessment 1**  
