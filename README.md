@@ -13,6 +13,7 @@ Advanced-OS-Scripting-Solutions/
 │   ├── exam_submission.py         # Main Python script
 │   ├── submission_log.txt         # Submission log file
 │── README.md                      # Project documentation
+│── Final_Report                   # Project Report
 ```
 
 ## 📝 Task Descriptions
