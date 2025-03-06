@@ -62,7 +62,7 @@ def view_books():
     for key, info in AVAILABLE_BOOKS.items():
         print(f"{key}. {info['title']} - {info['stock']} copies available")
 
-# Function to request a book (prevents duplicate requests and allows priority updates)
+# Function to request a book
 def request_book():
     view_books()
     book_id = input("\nEnter the book number you want to request: ").strip()
@@ -85,6 +85,12 @@ def request_book():
     if not student_name:
         print("❌ Name cannot be empty.")
         return
+
+    # Check if the student has already borrowed this book
+    borrowed_books = load_borrowed_books()
+    if any(b["student"].lower() == student_name.lower() and b["book"] == book_title for b in borrowed_books):
+        print(f"⚠ You have already borrowed '{book_title}'. You cannot request it again.")
+        return  # Stops them immediately
 
     requests = load_requests()
 
@@ -119,12 +125,14 @@ def request_book():
         else:
             print("❌ Invalid priority. Enter a number between 1 and 10.")
 
-    # Add request to queue
-    requests.append({"student": student_name, "book": book_title, "priority": priority})
+    # Add request to queue with timestamp for FIFO ordering
+    requests.append({
+        "student": student_name,
+        "book": book_title,
+        "priority": priority,
+        "timestamp": datetime.datetime.now().isoformat()
+    })
     
-    # Auto-sort if needed
-    requests.sort(key=lambda x: x["priority"], reverse=True)  
-
     save_requests(requests)
 
     log_action(f"📖 Book requested: {book_title} by {student_name} (Priority: {priority})")
@@ -139,16 +147,24 @@ def process_requests():
         return
 
     print("\n📌 Choose processing method:")
-    print("1️⃣  FIFO (First Come, First Serve)")
-    print("2️⃣  Priority-based (Highest Priority First)")
+    print("1️⃣ FIFO (First Come, First Serve)")
+    print("2️⃣ Priority-based (Highest Priority First)")
 
     choice = input("Enter option: ").strip()
 
-    if choice == "2":
+    if choice == "1":
+        # FIFO: sort requests by timestamp (oldest first)
+        requests.sort(key=lambda x: x["timestamp"])
+    elif choice == "2":
+        # Priority Mode: sort requests based on priority (highest first)
         requests.sort(key=lambda x: x["priority"], reverse=True)
+    else:
+        print("❌ Invalid option.")
+        return
 
-    processed_request = requests.pop(0)  # Take only one request
-    save_requests(requests)  # Immediately update the request queue
+    # Process the first request in the sorted list
+    processed_request = requests.pop(0)
+    save_requests(requests)  # Update request queue immediately
 
     # Reduce stock when book is borrowed
     for key, info in AVAILABLE_BOOKS.items():
@@ -157,16 +173,15 @@ def process_requests():
                 info["stock"] -= 1
             else:
                 print(f"⚠ '{processed_request['book']}' is out of stock. Request cannot be processed.")
-                return  # Prevent duplicate borrowing of an out-of-stock book
+                return  
 
     # Store borrowed books
     borrowed_books = load_borrowed_books()
 
     # Check if the student already borrowed this book
-    for entry in borrowed_books:
-        if entry["student"] == processed_request["student"] and entry["book"] == processed_request["book"]:
-            print(f"⚠ {processed_request['student']} has already borrowed '{processed_request['book']}'.")
-            return  # Prevent duplicate borrowing
+    if any(b["student"].lower() == processed_request["student"].lower() and b["book"] == processed_request["book"] for b in borrowed_books):
+        print(f"⚠ {processed_request['student']} has already borrowed '{processed_request['book']}'.")
+        return  
 
     borrowed_books.append(processed_request)
     save_borrowed_books(borrowed_books)
@@ -197,14 +212,17 @@ def exit_system():
 
 # Main menu loop
 while True:
-    print("\n🔹 Library Smart Borrowing System 🔹")
-    print("1️⃣  View Available Books")
-    print("2️⃣  Request a Book")
-    print("3️⃣  Process Book Requests")
-    print("4️⃣  List Borrowed Books")
-    print("5️⃣  Exit")
-
-    option = input("Choose an option: ").strip()
+    print("\n==============================================")
+    print(" 📚 Library Smart Borrowing System ")
+    print("==============================================")
+    print(" 1️⃣  View Available Books")
+    print(" 2️⃣  Request a Book")
+    print(" 3️⃣  Process Book Requests")
+    print(" 4️⃣  List Borrowed Books")
+    print(" 5️⃣  Exit")
+    print("==============================================\n")
+    
+    option = input("🔹 Enter your choice: ").strip()
 
     if option == "1":
         view_books()
@@ -217,4 +235,4 @@ while True:
     elif option == "5":
         exit_system()
     else:
-        print("❌ Invalid choice! Please try again.")
+        print("\n❌ Invalid choice, please try again.\n")
