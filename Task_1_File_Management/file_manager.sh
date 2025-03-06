@@ -2,7 +2,7 @@
 
 # 🟢 Global Variables
 BACKUP_DIR="Backup"
-TRASH_DIR="Trash"  
+TRASH_DIR="Trash"
 LOG_FILE="backup_log.txt"
 ERROR_LOG="error_log.txt"
 MAX_BACKUP_SIZE=$((500 * 1024 * 1024))
@@ -10,17 +10,17 @@ MAX_BACKUP_SIZE=$((500 * 1024 * 1024))
 # Ensure required directories exist
 mkdir -p "$BACKUP_DIR" "$TRASH_DIR"
 
-# ✅ Function to log actions
+# Function to log actions
 log_action() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
 }
 
-# ✅ Function to log errors
+# Function to log errors
 log_error() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$ERROR_LOG"
 }
 
-# ✅ Function to List Files
+# Function to List Files (Pure Bash version)
 list_files() {
     echo -e "\n📂 Available files (including subdirectories) in current directory:\n"
     echo "1. Sort by Name"
@@ -33,16 +33,22 @@ list_files() {
     echo "------------------------------------------------------------"
 
     case $sort_option in
-        1) find . -type f -printf "%P %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort | awk '{printf "%-40s %-10s %-20s\n", $1, $2 " bytes", $3 " " $4}' ;;
-        2) find . -type f -printf "%P %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort -k2,2nr | awk '{printf "%-40s %-10s %-20s\n", $1, $2 " bytes", $3 " " $4}' ;;
-        3) find . -type f -printf "%P %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort -k3,3r -k4,4r | awk '{printf "%-40s %-10s %-20s\n", $1, $2 " bytes", $3 " " $4}' ;;
-        *) echo "❌ Invalid option!" ;;
+        1) file_list=$(find . -type f -printf "%P %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort) ;;
+        2) file_list=$(find . -type f -printf "%P %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort -k2,2nr) ;;
+        3) file_list=$(find . -type f -printf "%P %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort -k3,3r -k4,4r) ;;
+        *) echo "❌ Invalid option!"; return ;;
     esac
+
+    while IFS= read -r line; do
+        read -r fname fsize fyear fmonth fday ftime rest <<< "$line"
+        last_modified="$fyear-$fmonth-$fday $ftime"
+        printf "%-40s %-10s %-20s\n" "$fname" "${fsize} bytes" "$last_modified"
+    done <<< "$file_list"
 
     echo "------------------------------------------------------------"
 }
 
-# ✅ Function to move files with validation
+# Function to move files with validation
 move_file() {
     read -p "Enter file name to move: " file
     read -p "Enter destination directory: " dest
@@ -64,7 +70,7 @@ move_file() {
     log_action "Moved file '$file' to '$dest/'"
 }
 
-# ✅ Function to rename files with overwrite protection
+# Function to rename files with overwrite protection
 rename_file() {
     read -p "Enter file to rename: " old_name
     read -p "Enter new name: " new_name
@@ -88,7 +94,7 @@ rename_file() {
     log_action "Renamed '$old_name' to '$new_name'"
 }
 
-# ✅ Function to delete files with recovery option
+# Function to delete files with recovery option
 delete_file() {
     read -p "Enter file to delete: " file
     if [ ! -f "$file" ]; then
@@ -116,7 +122,7 @@ delete_file() {
     fi
 }
 
-# ✅ Function to restore files from Trash
+# Function to restore files from Trash
 restore_file() {
     read -p "Enter file to restore: " file
     if [ ! -f "$TRASH_DIR/$file" ]; then
@@ -129,7 +135,7 @@ restore_file() {
     log_action "Restored file '$file' from Trash"
 }
 
-# ✅ Fixed Backup Function
+# Function to backup files
 backup_files() {
     read -p "Enter file(s) to backup (separated by space): " files
     timestamp=$(date '+%Y%m%d_%H%M%S')
@@ -145,7 +151,7 @@ backup_files() {
         fi
     done
 
-    # ✅ Automatic Cleanup if Backup Exceeds 500MB
+    # Automatic Cleanup if Backup Exceeds 500MB
     backup_size=$(du -sb "$BACKUP_DIR" | awk '{print $1}')
     if (( backup_size > MAX_BACKUP_SIZE )); then
         oldest_file=$(ls -t "$BACKUP_DIR" | tail -1)
@@ -155,23 +161,25 @@ backup_files() {
     fi
 }
 
-# ✅ Function to view logs
+# Function to view logs
 view_logs() {
     echo -e "\n📜 Recent Logs:"
     tail -n 10 "$LOG_FILE"
 }
 
-# ✅ Function to exit script safely
+# Function to exit script safely
 exit_script() {
     read -p "Are you sure you want to exit? (Y/N): " confirm
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        echo "👋 Goodbye!"
         log_action "User exited script"
+        echo "👋 Goodbye!"
         exit 0
+    else
+        echo "🚫 Exit cancelled."
     fi
 }
 
-# ✅ Menu-driven system with enhanced UI
+# Main Menu loop
 while true; do
     echo -e "\n=============================================="
     echo -e " 📁 University File Management System "
