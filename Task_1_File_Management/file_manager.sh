@@ -20,7 +20,7 @@ log_error() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$ERROR_LOG"
 }
 
-# Function to List Files (Pure Bash version)
+# Function to List Files
 list_files() {
     echo -e "\n📂 Available files (including subdirectories) in current directory:\n"
     echo "1. Sort by Name"
