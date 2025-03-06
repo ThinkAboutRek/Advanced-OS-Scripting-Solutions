@@ -42,7 +42,7 @@ Task_1_File_Management/
 ├── Backup/                   # Directory where backups are stored
 ├── Test_folder/              # Directory for testing file operations
 ├── Trash/                    # Directory for deleted files
-├── file_log.txt              # Log file tracking file activities
+├── backup_log.txt            # Log file tracking file activities
 ├── file_management.sh        # Bash script for file management & backup
 ├── Test files                # Test files for testing 
 
