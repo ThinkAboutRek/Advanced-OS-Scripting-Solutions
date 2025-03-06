@@ -12,6 +12,16 @@ log_action() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
 }
 
+# Custom trim function
+trim() {
+    local var="$*"
+    # Remove leading whitespace
+    var="${var#"${var%%[![:space:]]*}"}"
+    # Remove trailing whitespace
+    var="${var%"${var##*[![:space:]]}"}"
+    echo "$var"
+}
+
 # Function to submit an assignment
 submit_assignment() {
     read -p "Enter Student ID: " student_id
@@ -73,12 +83,11 @@ check_submission() {
 
     if [ -s "$LOG_FILE" ]; then
         while IFS= read -r line; do
-            # Expect log lines to have the format:
-            # "YYYY-MM-DD HH:MM:SS - student_id | filename | timestamp"
-            # Split the line using "|" as delimiter.
+            # Expect log lines in the format: "YYYY-MM-DD HH:MM:SS - student_id | filename | timestamp"
             IFS='|' read -r part1 logged_filename rest <<< "$line"
-            # Remove any extra spaces and convert to lowercase
-            logged_filename=$(echo "$logged_filename" | sed 's/.*- //' | xargs | tr '[:upper:]' '[:lower:]')
+            # Remove the leading date, hyphen, and student id; then trim spaces and convert to lowercase
+            logged_filename=$(trim "${logged_filename##*-}")
+            logged_filename=$(echo "$logged_filename" | tr '[:upper:]' '[:lower:]')
             if [ "$logged_filename" = "$input_file" ]; then
                 found=true
                 break
