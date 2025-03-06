@@ -47,7 +47,7 @@ submit_assignment() {
         fi
     fi
 
-    # Additionally, check all files in the submission directory (if any) with the same name
+    # Additionally, check all files in the submission directory with the same name
     for file in "$SUBMISSION_DIR"/*; do
         if [[ "$(basename "$file")" == "$filename" ]]; then
             if cmp -s "$file_path" "$file"; then
@@ -64,19 +64,38 @@ submit_assignment() {
     echo -e "\n✅ Submission successful!\n"
 }
 
-# Function to check if a file has been submitted
+# function to check for an existing submission with exact, case-insensitive matching.
 check_submission() {
-    read -p "Enter the filename to check: " check_file
-    if grep -q "$check_file" "$LOG_FILE"; then
-        echo -e "\n✅ File '$check_file' has been submitted.\n"
+    read -p "Enter the filename to check: " input_file
+    # Convert input filename to lowercase
+    input_file=$(echo "$input_file" | tr '[:upper:]' '[:lower:]')
+    found=false
+
+    if [ -s "$LOG_FILE" ]; then
+        while IFS= read -r line; do
+            # Expect log lines to have the format:
+            # "YYYY-MM-DD HH:MM:SS - student_id | filename | timestamp"
+            # Split the line using "|" as delimiter.
+            IFS='|' read -r part1 logged_filename rest <<< "$line"
+            # Remove any extra spaces and convert to lowercase
+            logged_filename=$(echo "$logged_filename" | sed 's/.*- //' | xargs | tr '[:upper:]' '[:lower:]')
+            if [ "$logged_filename" = "$input_file" ]; then
+                found=true
+                break
+            fi
+        done < "$LOG_FILE"
+    fi
+
+    if $found; then
+        echo -e "\n✅ File '$input_file' has been submitted.\n"
     else
-        echo -e "\n❌ File '$check_file' not found in submissions.\n"
+        echo -e "\n❌ File '$input_file' not found in submissions.\n"
     fi
 }
 
 # Function to list all submissions
 list_submissions() {
-    if [[ -s "$LOG_FILE" ]]; then
+    if [ -s "$LOG_FILE" ]; then
         echo -e "\n📄 List of All Submitted Assignments:\n"
         cat "$LOG_FILE"
         echo ""

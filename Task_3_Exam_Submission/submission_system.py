@@ -65,16 +65,26 @@ def submit_assignment():
     print("\n✅ Submission successful!\n")
 
 def check_submission():
-    check_file = input("Enter the filename to check: ").strip()
+    # Read user input and normalize case for comparison.
+    check_file = input("Enter the filename to check: ").strip().lower()
+    found = False
+
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r") as f:
-            log_data = f.read()
-        if check_file in log_data:
-            print(f"\n✅ File '{check_file}' has been submitted.\n")
-        else:
-            print(f"\n❌ File '{check_file}' not found in submissions.\n")
+            for line in f:
+                # We're expecting log lines for successful submissions to be in the format:
+                # "YYYY-MM-DD HH:MM:SS - student_id | filename | timestamp"
+                if '|' in line:
+                    parts = line.split('|')
+                    if len(parts) >= 2:
+                        logged_filename = parts[1].strip().lower()
+                        if logged_filename == check_file:
+                            found = True
+                            break
+    if found:
+        print(f"\n✅ File '{check_file}' has been submitted.\n")
     else:
-        print("\n❌ No submissions found.\n")
+        print(f"\n❌ File '{check_file}' not found in submissions.\n")
 
 def list_submissions():
     if os.path.exists(LOG_FILE) and os.path.getsize(LOG_FILE) > 0:
