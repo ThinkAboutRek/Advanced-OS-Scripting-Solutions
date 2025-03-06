@@ -77,11 +77,12 @@ An **automated assignment submission system** that validates student submissions
 - **File Validation:**  
   - Accepts only `.pdf` and `.docx` files (max 5MB)  
   - Rejects duplicate submissions (based on filename and content)
-- **Plagiarism Detection (Bonus):**  
+- **Plagiarism Detection:**  
   - Uses Python to extract text from both `.docx` (using `python-docx`) and `.pdf` files (using `PyPDF2`)  
   - Flags files with over 90% similarity
 - **Files:**  
   - Bash submission system: `exam_submission.sh`  
+  - Python submission system: `exam_submission.py`  
   - Python similarity checker: `similarity_check.py`  
   - Log file: `submission_log.txt`
 
@@ -91,9 +92,11 @@ Task_3_Exam_Submission/
 ├── Submissions/              # Directory where submitted files are stored
 ├── plagiarism_detection.py   # Python script for plagiarism detection
 ├── submission_log.txt        # Log file for tracking submissions
+├── submission_system.py      # Python script for assignment submission
 ├── submission_system.sh      # Bash script for assignment submission
 ```
-
+When entering file path in Bash always use `/c/` instead of `C:\` and replace backslashes (`\`) with forward slashes (`/`).
+For Python standard windows file path works.
 ---
 
 ## Installation & Usage
