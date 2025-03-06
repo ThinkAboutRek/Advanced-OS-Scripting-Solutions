@@ -3,7 +3,7 @@ from difflib import SequenceMatcher
 from docx import Document
 import PyPDF2
 
-# Define the submission directory (consistent with the Bash script)
+# Define the submission directory
 SUBMISSION_DIR = "Submissions"
 
 def get_text_from_docx(file_path):
@@ -68,7 +68,7 @@ def detect_plagiarism():
 
             similarity_score = check_similarity(text1, text2)
             if similarity_score > 90:
-                print(f"⚠️ High similarity detected: {files[i]} & {files[j]} - {similarity_score:.2f}%")
+                print(f"⚠️  High similarity detected: {files[i]} & {files[j]} - {similarity_score:.2f}%")
                 flagged_files.append((files[i], files[j], similarity_score))
 
     if not flagged_files:
