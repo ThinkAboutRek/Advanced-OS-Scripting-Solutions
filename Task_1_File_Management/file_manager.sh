@@ -2,10 +2,10 @@
 
 # 🟢 Global Variables
 BACKUP_DIR="Backup"
-TRASH_DIR="Trash"  # Folder for deleted files (soft delete)
+TRASH_DIR="Trash"  
 LOG_FILE="backup_log.txt"
 ERROR_LOG="error_log.txt"
-MAX_BACKUP_SIZE=$((500 * 1024 * 1024))  # 500MB in bytes
+MAX_BACKUP_SIZE=$((500 * 1024 * 1024))
 
 # Ensure required directories exist
 mkdir -p "$BACKUP_DIR" "$TRASH_DIR"
@@ -20,26 +20,26 @@ log_error() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$ERROR_LOG"
 }
 
-# ✅ Fixed Function to List Files with Clean Formatting
+# ✅ Function to List Files
 list_files() {
-    echo -e "\n📂 Available files in current directory:\n"
+    echo -e "\n📂 Available files (including subdirectories) in current directory:\n"
     echo "1. Sort by Name"
     echo "2. Sort by Size (Largest First)"
     echo "3. Sort by Last Modified Date (Newest First)"
     read -p "Choose sorting option (1-3): " sort_option
 
-    echo -e "\n--------------------------------------------------"
-    printf "%-25s %-10s %-20s\n" "Filename" "Size" "Last Modified"
-    echo "--------------------------------------------------"
+    echo -e "\n------------------------------------------------------------"
+    printf "%-40s %-10s %-20s\n" "Filename" "Size" "Last Modified"
+    echo "------------------------------------------------------------"
 
     case $sort_option in
-        1) find . -maxdepth 1 -type f -printf "%f %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort | awk '{printf "%-25s %-10s %-20s\n", $1, $2 " bytes", $3 " " $4}' ;;
-        2) find . -maxdepth 1 -type f -printf "%f %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort -k2,2nr | awk '{printf "%-25s %-10s %-20s\n", $1, $2 " bytes", $3 " " $4}' ;;
-        3) find . -maxdepth 1 -type f -printf "%f %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort -k3,3r -k4,4r | awk '{printf "%-25s %-10s %-20s\n", $1, $2 " bytes", $3 " " $4}' ;;
+        1) find . -type f -printf "%P %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort | awk '{printf "%-40s %-10s %-20s\n", $1, $2 " bytes", $3 " " $4}' ;;
+        2) find . -type f -printf "%P %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort -k2,2nr | awk '{printf "%-40s %-10s %-20s\n", $1, $2 " bytes", $3 " " $4}' ;;
+        3) find . -type f -printf "%P %s %TY-%Tm-%Td %TH:%TM:%TS\n" | sort -k3,3r -k4,4r | awk '{printf "%-40s %-10s %-20s\n", $1, $2 " bytes", $3 " " $4}' ;;
         *) echo "❌ Invalid option!" ;;
     esac
 
-    echo "--------------------------------------------------"
+    echo "------------------------------------------------------------"
 }
 
 # ✅ Function to move files with validation
@@ -76,7 +76,7 @@ rename_file() {
     fi
 
     if [ -f "$new_name" ]; then
-        read -p "⚠️ File '$new_name' already exists! Overwrite? (Y/N): " confirm
+        read -p "⚠️  File '$new_name' already exists! Overwrite? (Y/N): " confirm
         if [[ "$confirm" =~ ^[Nn]$ ]]; then
             echo "🚫 Rename cancelled."
             return
@@ -111,7 +111,7 @@ delete_file() {
         log_action "Moved '$file' to Trash"
     else
         rm "$file"
-        echo "⚠️ File permanently deleted!"
+        echo "⚠️  File permanently deleted!"
         log_action "Deleted file '$file'"
     fi
 }
@@ -129,7 +129,7 @@ restore_file() {
     log_action "Restored file '$file' from Trash"
 }
 
-# ✅ Fixed Backup Function (No GPG, No Encryption)
+# ✅ Fixed Backup Function
 backup_files() {
     read -p "Enter file(s) to backup (separated by space): " files
     timestamp=$(date '+%Y%m%d_%H%M%S')
@@ -173,19 +173,20 @@ exit_script() {
 
 # ✅ Menu-driven system with enhanced UI
 while true; do
-    echo "------------------------------------"
-    echo "  📁 University File Management System  "
-    echo "------------------------------------"
-    echo "1. List files"
-    echo "2. Move file"
-    echo "3. Rename file"
-    echo "4. Delete file"
-    echo "5. Restore file"
-    echo "6. Backup files"
-    echo "7. View logs"
-    echo "8. Exit"
-    echo "------------------------------------"
-    read -p "Choose an option (1-8): " choice
+    echo -e "\n=============================================="
+    echo -e " 📁 University File Management System "
+    echo -e "=============================================="
+    echo -e " 1️⃣  List Files"
+    echo -e " 2️⃣  Move File"
+    echo -e " 3️⃣  Rename File"
+    echo -e " 4️⃣  Delete File"
+    echo -e " 5️⃣  Restore File"
+    echo -e " 6️⃣  Backup Files"
+    echo -e " 7️⃣  View Logs"
+    echo -e " 8️⃣  Exit"
+    echo -e "==============================================\n"
+    
+    read -p "🔹 Enter your choice: " choice
 
     case $choice in
         1) list_files ;;
@@ -196,6 +197,6 @@ while true; do
         6) backup_files ;;
         7) view_logs ;;
         8) exit_script ;;
-        *) echo "❌ Invalid option! Please enter a number between 1-8." ;;
+        *) echo -e "\n❌ Invalid choice, please try again.\n" ;;
     esac
 done
