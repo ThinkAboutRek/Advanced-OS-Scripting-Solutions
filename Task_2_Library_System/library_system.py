@@ -1,6 +1,11 @@
 import os
 import json
 import datetime
+import sys
+
+# Only import patch if running tests
+if len(sys.argv) > 1 and sys.argv[1] == "test":
+    from unittest.mock import patch
 
 # File paths
 BOOK_REQUESTS_FILE = "book_requests.txt"
@@ -90,7 +95,7 @@ def request_book():
     borrowed_books = load_borrowed_books()
     if any(b["student"].lower() == student_name.lower() and b["book"] == book_title for b in borrowed_books):
         print(f"⚠ You have already borrowed '{book_title}'. You cannot request it again.")
-        return  # Stops them immediately
+        return
 
     requests = load_requests()
 
@@ -153,10 +158,10 @@ def process_requests():
     choice = input("Enter option: ").strip()
 
     if choice == "1":
-        # FIFO: sort requests by timestamp (oldest first)
+        processing_method = "FIFO"
         requests.sort(key=lambda x: x["timestamp"])
     elif choice == "2":
-        # Priority Mode: sort requests based on priority (highest first)
+        processing_method = "Priority"
         requests.sort(key=lambda x: x["priority"], reverse=True)
     else:
         print("❌ Invalid option.")
@@ -186,8 +191,8 @@ def process_requests():
     borrowed_books.append(processed_request)
     save_borrowed_books(borrowed_books)
 
-    log_action(f"✅ Book loaned: {processed_request['book']} to {processed_request['student']} (Priority: {processed_request['priority']})")
-    print(f"📚 {processed_request['student']} has borrowed '{processed_request['book']}'.")
+    log_action(f"✅ Book loaned via {processing_method}: {processed_request['book']} to {processed_request['student']} (Priority: {processed_request['priority']})")
+    print(f"📚 {processed_request['student']} has borrowed '{processed_request['book']}' via {processing_method} scheduling.")
 
 # Function to list borrowed books
 def list_borrowed_books():
@@ -210,29 +215,88 @@ def exit_system():
     else:
         print("🚫 Exit cancelled.")
 
-# Main menu loop
-while True:
-    print("\n==============================================")
-    print(" 📚 Library Smart Borrowing System ")
-    print("==============================================")
-    print(" 1️⃣  View Available Books")
-    print(" 2️⃣  Request a Book")
-    print(" 3️⃣  Process Book Requests")
-    print(" 4️⃣  List Borrowed Books")
-    print(" 5️⃣  Exit")
-    print("==============================================\n")
-    
-    option = input("🔹 Enter your choice: ").strip()
+# ===== Test Functions for the Improved Parts =====
 
-    if option == "1":
-        view_books()
-    elif option == "2":
-        request_book()
-    elif option == "3":
-        process_requests()
-    elif option == "4":
-        list_borrowed_books()
-    elif option == "5":
-        exit_system()
+def test_process_requests_fifo():
+    # Clear files
+    with open(BOOK_REQUESTS_FILE, "w", encoding="utf-8") as f: f.write("[]")
+    with open(BORROWED_BOOKS_FILE, "w", encoding="utf-8") as f: f.write("[]")
+    with open(LIBRARY_LOG_FILE, "w", encoding="utf-8") as f: f.write("")
+    # Create fake queue: two requests with different timestamps (FIFO order: earliest first)
+    requests = [
+         {"student": "Shayan", "book": "The Great Gatsby", "priority": 5, "timestamp": "2025-03-06T10:00:00"},
+         {"student": "Alice", "book": "1984", "priority": 10, "timestamp": "2025-03-06T11:00:00"}
+    ]
+    with open(BOOK_REQUESTS_FILE, "w", encoding="utf-8") as f:
+         json.dump(requests, f, indent=4)
+    # Patch input to simulate FIFO option: input returns "1"
+    with patch('builtins.input', side_effect=["1"]):
+         process_requests()
+    # After processing, check that "Shayan" request was processed (FIFO)
+    borrowed_books = load_borrowed_books()
+    assert borrowed_books[0]["student"] == "Shayan", "FIFO test failed: Expected Shayan's request to be processed"
+    # Check library_log.txt for FIFO message
+    with open(LIBRARY_LOG_FILE, "r", encoding="utf-8") as f:
+         logs = f.read()
+    assert "via FIFO" in logs, "FIFO test failed: Log does not contain FIFO processing method"
+    print("FIFO test passed.")
+
+def test_process_requests_priority():
+    # Clear files
+    with open(BOOK_REQUESTS_FILE, "w", encoding="utf-8") as f: f.write("[]")
+    with open(BORROWED_BOOKS_FILE, "w", encoding="utf-8") as f: f.write("[]")
+    with open(LIBRARY_LOG_FILE, "w", encoding="utf-8") as f: f.write("")
+    # Create fake queue: two requests with different priorities (highest priority should be processed)
+    requests = [
+         {"student": "Shayan", "book": "The Great Gatsby", "priority": 5, "timestamp": "2025-03-06T10:00:00"},
+         {"student": "Alice", "book": "1984", "priority": 10, "timestamp": "2025-03-06T09:00:00"}
+    ]
+    with open(BOOK_REQUESTS_FILE, "w", encoding="utf-8") as f:
+         json.dump(requests, f, indent=4)
+    # Patch input to simulate Priority option: input returns "2"
+    with patch('builtins.input', side_effect=["2"]):
+         process_requests()
+    # After processing, check that "Alice" request was processed (Priority)
+    borrowed_books = load_borrowed_books()
+    assert borrowed_books[0]["student"] == "Alice", "Priority test failed: Expected Alice's request to be processed"
+    # Check library_log.txt for Priority message
+    with open(LIBRARY_LOG_FILE, "r", encoding="utf-8") as f:
+         logs = f.read()
+    assert "via Priority" in logs, "Priority test failed: Log does not contain Priority processing method"
+    print("Priority test passed.")
+
+def run_tests():
+    test_process_requests_fifo()
+    test_process_requests_priority()
+    print("All tests passed.")
+
+# ===== Main Execution =====
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "test":
+        run_tests()
     else:
-        print("\n❌ Invalid choice, please try again.\n")
+        while True:
+            print("\n==============================================")
+            print(" 📚 Library Smart Borrowing System ")
+            print("==============================================")
+            print(" 1️⃣  View Available Books")
+            print(" 2️⃣  Request a Book")
+            print(" 3️⃣  Process Book Requests")
+            print(" 4️⃣  List Borrowed Books")
+            print(" 5️⃣  Exit")
+            print("==============================================\n")
+            
+            option = input("🔹 Enter your choice: ").strip()
+            
+            if option == "1":
+                view_books()
+            elif option == "2":
+                request_book()
+            elif option == "3":
+                process_requests()
+            elif option == "4":
+                list_borrowed_books()
+            elif option == "5":
+                exit_system()
+            else:
+                print("\n❌ Invalid choice, please try again.\n")
