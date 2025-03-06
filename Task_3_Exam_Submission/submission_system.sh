@@ -1,14 +1,16 @@
 #!/bin/bash
 
-# University Examination Submission & Similarity Detection System
-# Bash Script for File Submission and Validation
-
 # Define the submission directory and log file
 SUBMISSION_DIR="Submissions"
 LOG_FILE="submission_log.txt"
 
 # Ensure the submission directory exists
 mkdir -p "$SUBMISSION_DIR"
+
+# Function to log actions
+log_action() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
+}
 
 # Function to submit an assignment
 submit_assignment() {
@@ -36,17 +38,29 @@ submit_assignment() {
         return
     fi
 
-    # Check for duplicate submission
-    for file in "$SUBMISSION_DIR"/*; do
-        if cmp -s "$file_path" "$file"; then
-            echo -e "\n⚠️  Error: Duplicate submission detected! File already exists.\n"
+    # Check for duplicate submission by filename first
+    if [ -f "$SUBMISSION_DIR/$filename" ]; then
+        if cmp -s "$file_path" "$SUBMISSION_DIR/$filename"; then
+            echo -e "\n⚠️ Duplicate submission detected! File '$filename' already exists with identical content.\n"
+            log_action "Duplicate submission attempt: Student ID $student_id tried to submit duplicate file '$filename'"
             return
+        fi
+    fi
+
+    # Additionally, check all files in the submission directory (if any) with the same name
+    for file in "$SUBMISSION_DIR"/*; do
+        if [[ "$(basename "$file")" == "$filename" ]]; then
+            if cmp -s "$file_path" "$file"; then
+                echo -e "\n⚠️ Duplicate submission detected! File '$filename' already exists with identical content.\n"
+                log_action "Duplicate submission attempt: Student ID $student_id tried to submit duplicate file '$filename'"
+                return
+            fi
         fi
     done
 
-    # Move file to submission directory
+    # Copy file to submission directory
     cp "$file_path" "$SUBMISSION_DIR/$filename"
-    echo "$student_id | $filename | $(date)" >> "$LOG_FILE"
+    echo "$student_id | $filename | $(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
     echo -e "\n✅ Submission successful!\n"
 }
 
