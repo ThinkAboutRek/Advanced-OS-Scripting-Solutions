@@ -100,6 +100,7 @@ For Python standard windows file path works.
 
 For example:
 /c/Users/Downloads/Test/Test.txt
+
 ---
 
 ## Installation & Usage
