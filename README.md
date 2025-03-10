@@ -97,6 +97,9 @@ Task_3_Exam_Submission/
 ```
 When entering file path in Bash always use `/c/` instead of `C:\` and replace backslashes (`\`) with forward slashes (`/`).
 For Python standard windows file path works.
+
+For example:
+/c/Users/Downloads/Test/Test.txt
 ---
 
 ## Installation & Usage
@@ -107,7 +110,7 @@ Ensure your system has:
 - **Python 3.x**
 - Required Python modules:
   ```
-  pip install python-docx PyPDF2
+  pip install python-docx PyPDF2 / py -m pip install python-docx PyPDF2
   ```
 
 ### Running Each Script
@@ -115,17 +118,17 @@ Ensure your system has:
 #### University File Management & Backup System (Bash)
 ```bash
 chmod +x file_manager.sh  
-./file_manager.sh
+./file_manager.sh / bash file_manager.sh
 ```
 
 #### Library Queue System (Python)
 ```bash
-python library_system.p
+python library_system.p / py library_system.p
 ```
 
 #### To run automated tests for the Library Queue System, execute:
 ```bash
-python library_system.py test
+python library_system.py test / py library_system.py test
 ```
 
 #### Exam Submission & Similarity Detection
@@ -133,12 +136,12 @@ python library_system.py test
 **Bash Submission System:**
 ```bash
 chmod +x submission_system.sh  
-./submission_system.sh
+./submission_system.sh / bash submission_system.sh
 ```
 
 **Plagiarism Detection (Python):**
 ```bash
-python plagiarism_detection.py
+python plagiarism_detection.py / py plagiarism_detection.py
 ```
 
 ---
