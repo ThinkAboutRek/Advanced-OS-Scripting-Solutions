@@ -152,7 +152,14 @@ backup_files() {
     done
 
     # Automatic Cleanup if Backup Exceeds 500MB
-    backup_size=$(du -sb "$BACKUP_DIR" | awk '{print $1}')
+    backup_size=0
+    for file in "$BACKUP_DIR"/*; do
+        if [ -f "$file" ]; then
+            filesize=$(stat -c%s "$file")
+            backup_size=$((backup_size + filesize))
+        fi
+    done
+
     if (( backup_size > MAX_BACKUP_SIZE )); then
         oldest_file=$(ls -t "$BACKUP_DIR" | tail -1)
         rm "$BACKUP_DIR/$oldest_file"
